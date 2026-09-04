@@ -44,6 +44,13 @@
     #status { margin-top: 16px; padding: 12px 14px; border-radius: 9px; font-size: .85rem; display: none; line-height: 1.45; }
     #status.ok  { background: #e6f4ea; color: #1e6e3a; border: 1px solid #a8d5b5; }
     #status.err { background: #fdecea; color: #a01c1c; border: 1px solid #f5aea8; }
+    .reports-link {
+      display: block; margin-top: 18px; text-align: center;
+      padding: 12px; border: 1px solid #d0d7de; border-radius: 9px;
+      text-decoration: none; color: #1a3a5c; font-size: .85rem;
+      font-weight: 600; transition: background .15s;
+    }
+    .reports-link:hover { background: #f6f8fa; }
     .foot { margin-top: 18px; font-size: .72rem; color: #aaa; text-align: center; line-height: 1.5; }
     .foot a { color: #7a8b9c; }
     .reset { background: none; border: 0; color: #7a8b9c; font-size: .72rem;
@@ -73,6 +80,12 @@
 
   <div id="status"></div>
 
+  <!-- Lives on the backend, so it needs the absolute ngrok URL rather than a
+       relative path like the built-in /dial page uses. Still Basic-auth
+       guarded (the reports carry caller data), so the browser will ask for
+       credentials even though placing a call no longer does. -->
+  <a class="reports-link" id="reports" target="_blank" rel="noopener">&#128202; View Call Reports Dashboard</a>
+
   <div class="foot">
     Backend: <span id="apihost"></span>
   </div>
@@ -89,6 +102,7 @@
   const status = document.getElementById('status');
   const phoneEl = document.getElementById('phone');
   document.getElementById('apihost').textContent = API.replace(/^https:\/\//, '');
+  document.getElementById('reports').href = API + '/api/v1/console/';
 
   // Put the caret after the "+91 " default rather than before it.
   phoneEl.addEventListener('focus', () => {
