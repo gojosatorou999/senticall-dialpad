@@ -74,8 +74,7 @@
   <div id="status"></div>
 
   <div class="foot">
-    Backend: <span id="apihost"></span><br>
-    <button class="reset" id="reset" type="button">Forget saved password</button>
+    Backend: <span id="apihost"></span>
   </div>
 </div>
 
@@ -84,7 +83,6 @@
   // allows one tunnel, and Twilio's webhooks need it). This page is hosted
   // separately on GitHub Pages and talks to it cross-origin.
   const API = "https://dreamily-attain-founding.ngrok-free.dev";
-  const USER = "sentinel";
 
   const form   = document.getElementById('form');
   const btn    = document.getElementById('btn');
@@ -97,28 +95,8 @@
     status.style.display = 'block';
   }
 
-  // The password is never stored in this file - it is prompted for once and
-  // kept in this browser only, so the page can live in a public repo.
-  function getAuth(force) {
-    let pw = force ? null : localStorage.getItem('sentinel_pw');
-    if (!pw) {
-      pw = prompt("Dial pad password:");
-      if (!pw) return null;
-      try { localStorage.setItem('sentinel_pw', pw); } catch (e) {}
-    }
-    return "Basic " + btoa(USER + ":" + pw);
-  }
-
-  document.getElementById('reset').addEventListener('click', () => {
-    try { localStorage.removeItem('sentinel_pw'); } catch (e) {}
-    show('ok', 'Saved password cleared. You will be asked again on the next call.');
-  });
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const auth = getAuth(false);
-    if (!auth) return;
-
     btn.disabled = true;
     btn.textContent = 'Calling…';
     status.style.display = 'none';
@@ -127,7 +105,6 @@
       const res = await fetch(API + '/dial/call', {
         method: 'POST',
         headers: {
-          'Authorization': auth,
           'Content-Type': 'application/x-www-form-urlencoded',
           // Without this, ngrok's free tier answers with its HTML
           // "You are about to visit" interstitial instead of our JSON.
@@ -136,16 +113,11 @@
         body: new URLSearchParams({ phone: document.getElementById('phone').value })
       });
 
-      if (res.status === 401) {
-        localStorage.removeItem('sentinel_pw');
-        show('err', 'Wrong password. Tap Call now to try again.');
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        show('ok', '✓ Calling you now — ' + (data.call_sid || ''));
       } else {
-        const data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          show('ok', '✓ Calling you now — ' + (data.call_sid || ''));
-        } else {
-          show('err', '✗ ' + (data.detail || ('Error ' + res.status)));
-        }
+        show('err', '✗ ' + (data.detail || ('Error ' + res.status)));
       }
     } catch (err) {
       show('err', '✗ Could not reach the backend. Is the agent running? (' + err.message + ')');
