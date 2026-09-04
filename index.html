@@ -65,9 +65,9 @@
 
   <form id="form">
     <label for="phone">Phone number</label>
-    <input id="phone" name="phone" type="tel" inputmode="tel"
-           placeholder="+91 98765 43210" required autocomplete="tel">
-    <div class="hint">Include the country code, e.g. +91 for India</div>
+    <input id="phone" name="phone" type="tel" inputmode="tel" value="+91 "
+           placeholder="+91 98765 43210" required autocomplete="tel" autofocus>
+    <div class="hint">Spaces are fine &mdash; e.g. +91 98765 43210</div>
     <button id="btn" type="submit">&#9742;&#65039; Call now</button>
   </form>
 
@@ -87,7 +87,16 @@
   const form   = document.getElementById('form');
   const btn    = document.getElementById('btn');
   const status = document.getElementById('status');
+  const phoneEl = document.getElementById('phone');
   document.getElementById('apihost').textContent = API.replace(/^https:\/\//, '');
+
+  // Put the caret after the "+91 " default rather than before it.
+  phoneEl.addEventListener('focus', () => {
+    if (phoneEl.selectionStart === 0) {
+      const end = phoneEl.value.length;
+      phoneEl.setSelectionRange(end, end);
+    }
+  });
 
   function show(kind, msg) {
     status.className = kind;
@@ -110,7 +119,9 @@
           // "You are about to visit" interstitial instead of our JSON.
           'ngrok-skip-browser-warning': 'true'
         },
-        body: new URLSearchParams({ phone: document.getElementById('phone').value })
+        // Twilio needs strict E.164, so drop spaces/dashes before sending.
+        // The backend normalises too, this just avoids a pointless round trip.
+        body: new URLSearchParams({ phone: phoneEl.value.replace(/[^\d+]/g, '') })
       });
 
       const data = await res.json().catch(() => ({}));
